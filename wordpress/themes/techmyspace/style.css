@@ -1,0 +1,10 @@
+/*
+Theme Name: Tech My Space
+Theme URI: https://www.techmyspace.co.uk
+Author: Tech My Space
+Description: Headless theme. Content types and ACF fields are registered in functions.php. The public site is the Next.js app. Activate this theme in Local, install ACF Pro, WPGraphQL and WPGraphQL for ACF, then run `wp tms seed`.
+Version: 1.0.0
+Requires at least: 6.4
+Requires PHP: 8.0
+Text Domain: techmyspace
+*/
