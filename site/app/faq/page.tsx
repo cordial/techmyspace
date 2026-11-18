@@ -4,13 +4,14 @@ import { ClosingCta } from "@/components/closing-cta";
 import { FaqBrowser } from "@/components/faq-browser";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/section";
+import { withCanonical } from "@/lib/seo";
 import { getFaqs, getServices, getSite } from "@/lib/wp/content";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical("/faq", {
   title: "FAQ",
   description:
     "Answers on CCTV, alarms, access control and audio visual from Tech My Space.",
-};
+});
 
 export default async function FaqPage() {
   const [faqs, services, site] = await Promise.all([

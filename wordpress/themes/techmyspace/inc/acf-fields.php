@@ -24,17 +24,88 @@ function tms_register_field_groups(): void
 		[[['param' => 'post_type', 'operator' => '==', 'value' => 'service']]],
 		array_merge(
 			[
+				tms_text('field_service_hero_title', 'Hero title', 'heroTitle'),
 				tms_textarea('field_service_summary', 'Summary', 'summary'),
-				tms_wysiwyg('field_service_body', 'Body', 'body'),
+				tms_select(
+					'field_service_hero_diagram',
+					'Hero diagram',
+					'heroDiagram',
+					[
+						'' => 'None (use the hero image, or the first gallery photo)',
+						'alarms' => 'Alarm floor plan',
+						'cctv' => 'CCTV coverage plan',
+						'wifi' => 'Wi-Fi main site and remote link',
+					]
+				),
+				tms_image('field_service_hero_image', 'Hero image (shown when no diagram is chosen)', 'heroImage'),
+				tms_textarea('field_service_hero_caption', 'Hero diagram or image caption', 'heroCaption'),
+				tms_text('field_service_hero_button_label', 'Hero button label (links to the contact block)', 'heroButtonLabel'),
+				tms_repeater(
+					'field_service_facts',
+					'Fact strip',
+					'facts',
+					[tms_text('field_service_fact_label', 'Label', 'label')]
+				),
+				tms_flexible_content(
+					'field_service_sections',
+					'Page sections',
+					'sections',
+					[
+						tms_section_layout('cards', 'Cards', [
+							tms_text('field_section_cards_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_cards_item_body', 'Body', 'body'),
+							tms_text('field_section_cards_item_link', 'Link (optional, e.g. /services/av or #venue-guide)', 'link'),
+						]),
+						tms_section_layout('propertyTabs', 'Property type tabs', [
+							tms_text('field_section_tabs_item_label', 'Tab label', 'tabLabel'),
+							tms_text('field_section_tabs_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_tabs_item_body', 'Body', 'body'),
+							tms_textarea('field_section_tabs_item_profiles', 'Property list', 'profiles'),
+						]),
+						tms_section_layout('steps', 'Numbered steps', [
+							tms_text('field_section_steps_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_steps_item_body', 'Body', 'body'),
+						]),
+						tms_section_layout('accordion', 'Expandable list', [
+							tms_text('field_section_accordion_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_accordion_item_body', 'Body', 'body'),
+						]),
+						tms_section_layout('checklist', 'Ticked list', [
+							tms_text('field_section_checklist_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_checklist_item_body', 'Body', 'body'),
+						]),
+						tms_section_layout('venueGuide', 'Venue guide', [
+							tms_text('field_section_venues_item_nav', 'Button label (leave blank for no button)', 'navLabel'),
+							tms_text('field_section_venues_item_title', 'Title', 'title'),
+							tms_wysiwyg('field_section_venues_item_body', 'Body', 'body'),
+							tms_text('field_section_venues_item_profiles_label', 'Property list label (defaults to "Property profiles")', 'profilesLabel'),
+							tms_textarea('field_section_venues_item_profiles', 'Property profiles', 'profiles'),
+							tms_image('field_section_venues_item_image', 'Image', 'image'),
+							tms_textarea('field_section_venues_item_caption', 'Image caption', 'imageCaption'),
+						]),
+					]
+				),
+				tms_repeater(
+					'field_service_questions',
+					'Page questions',
+					'questions',
+					[
+						tms_text('field_service_question', 'Question', 'question'),
+						tms_wysiwyg('field_service_answer', 'Answer', 'answer'),
+					]
+				),
+				tms_text('field_service_survey_heading', 'Survey heading', 'surveyHeading'),
+				tms_textarea('field_service_survey_body', 'Survey text', 'surveyBody'),
 				tms_repeater(
 					'field_service_features',
-					'Features',
+					'Features (pages without sections)',
 					'features',
 					[
 						tms_text('field_service_feature_title', 'Title', 'title'),
 						tms_wysiwyg('field_service_feature_body', 'Body', 'body'),
 					]
 				),
+				tms_wysiwyg('field_service_body', 'Body', 'body'),
 				tms_gallery('field_service_gallery', 'Gallery', 'gallery'),
 				tms_relationship('field_service_related_faqs', 'Related FAQs', 'relatedFaqs', ['faq']),
 			],
@@ -248,6 +319,95 @@ function tms_repeater(string $key, string $label, string $name, array $sub_field
 		'sub_fields' => $sub_fields,
 		'show_in_graphql' => true,
 		'graphql_field_name' => $name,
+	];
+}
+
+/**
+ * @param array<string, string> $choices
+ * @return array<string, mixed>
+ */
+function tms_select(string $key, string $label, string $name, array $choices): array
+{
+	return [
+		'key' => $key,
+		'label' => $label,
+		'name' => $name,
+		'type' => 'select',
+		'choices' => $choices,
+		'default_value' => '',
+		'allow_null' => 0,
+		'multiple' => 0,
+		'return_format' => 'value',
+		'show_in_graphql' => true,
+		'graphql_field_name' => $name,
+	];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function tms_image(string $key, string $label, string $name): array
+{
+	return [
+		'key' => $key,
+		'label' => $label,
+		'name' => $name,
+		'type' => 'image',
+		'return_format' => 'id',
+		'preview_size' => 'medium',
+		'library' => 'all',
+		'show_in_graphql' => true,
+		'graphql_field_name' => $name,
+	];
+}
+
+/**
+ * @param array<int, array<string, mixed>> $layouts
+ * @return array<string, mixed>
+ */
+function tms_flexible_content(string $key, string $label, string $name, array $layouts): array
+{
+	$keyed = [];
+	foreach ($layouts as $layout) {
+		$keyed[$layout['key']] = $layout;
+	}
+
+	return [
+		'key' => $key,
+		'label' => $label,
+		'name' => $name,
+		'type' => 'flexible_content',
+		'button_label' => 'Add section',
+		'layouts' => $keyed,
+		'show_in_graphql' => true,
+		'graphql_field_name' => $name,
+	];
+}
+
+/**
+ * Every section shares a heading, an intro and a list of items. The items
+ * repeater needs a per-layout GraphQL name, or WPGraphQL for ACF gives every
+ * layout the same ServiceDetailsSectionsItems type.
+ *
+ * @param array<int, array<string, mixed>> $item_fields
+ * @return array<string, mixed>
+ */
+function tms_section_layout(string $name, string $label, array $item_fields): array
+{
+	$prefix = 'field_section_' . strtolower($name);
+	$items = tms_repeater($prefix . '_items', 'Items', 'items', $item_fields);
+	$items['graphql_field_name'] = $name . 'Items';
+
+	return [
+		'key' => 'layout_section_' . strtolower($name),
+		'name' => $name,
+		'label' => $label,
+		'display' => 'block',
+		'sub_fields' => [
+			tms_text($prefix . '_heading', 'Heading', 'heading'),
+			tms_textarea($prefix . '_intro', 'Intro', 'intro'),
+			$items,
+		],
 	];
 }
 

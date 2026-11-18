@@ -3,6 +3,7 @@ import { Barlow_Condensed, Source_Sans_3 } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { getSiteUrl } from "@/lib/seo";
 
 import "./globals.css";
 
@@ -19,17 +20,21 @@ const body = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Tech My Space",
     template: "%s · Tech My Space",
   },
-  description: "CCTV, intruder alarms, access control, structured cabling, Wi-Fi and AV in Stockport.",
+  description:
+    "CCTV, intruder alarms, access control, structured cabling, Wi-Fi and AV in Stockport.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-GB" className={`${display.variable} ${body.variable} h-full antialiased`}>
+    <html
+      lang="en-GB"
+      className={`${display.variable} ${body.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col font-body">
         <SiteHeader />
         <main className="flex-1">{children}</main>

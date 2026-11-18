@@ -9,6 +9,7 @@ import { MediaFrame } from "@/components/media-frame";
 import { RichText } from "@/components/rich-text";
 import { Section } from "@/components/section";
 import { caseStudyPath } from "@/lib/routes";
+import { withCanonical } from "@/lib/seo";
 import type { CaseStudy } from "@/lib/types";
 import { getCaseStudies, getCaseStudy, getSite } from "@/lib/wp/content";
 
@@ -27,7 +28,10 @@ export async function generateMetadata({
   if (!study) {
     return {};
   }
-  return { title: study.metaTitle, description: study.metaDescription };
+  return withCanonical(caseStudyPath(slug), {
+    title: study.metaTitle,
+    description: study.metaDescription,
+  });
 }
 
 function articleBody(html: string): string {

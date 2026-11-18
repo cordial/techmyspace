@@ -7,20 +7,52 @@ import type {
   Content,
   ContentPage,
   Faq,
+  Feature,
   HomeContent,
   ImageAsset,
   PageKind,
   Service,
+  ServiceQuestion,
+  ServiceSection,
   SiteInfo,
   Testimonial,
+  VenueGuideItem,
 } from "@/lib/types";
+import { isHeroDiagram } from "@/lib/types";
 
 type SeedImage = { url?: string; alt?: string };
+
+type SeedVenueGuideItem = Omit<VenueGuideItem, "image"> & { image?: SeedImage };
+
+type SeedSection =
+  | Exclude<ServiceSection, { layout: "venueGuide" }>
+  | (Omit<Extract<ServiceSection, { layout: "venueGuide" }>, "items"> & {
+      items: SeedVenueGuideItem[];
+    });
+
+type SeedService = Pick<
+  Service,
+  "slug" | "title" | "summary" | "body" | "metaTitle" | "metaDescription" | "menuOrder"
+> & {
+  heroTitle?: string;
+  heroDiagram?: string;
+  heroImage?: SeedImage;
+  heroCaption?: string;
+  heroButtonLabel?: string;
+  facts?: string[];
+  sections?: SeedSection[];
+  features?: Feature[];
+  questions?: ServiceQuestion[];
+  surveyHeading?: string;
+  surveyBody?: string;
+  images?: SeedImage[];
+  legacyPaths?: string[];
+};
 
 type SeedFile = {
   site: SiteInfo;
   home: HomeContent & { legacyPaths?: string[] };
-  services: Array<Service & { legacyPaths?: string[] }>;
+  services: SeedService[];
   caseStudies: Array<CaseStudy & { legacyPaths?: string[] }>;
   faqs: Array<Faq & { legacyPaths?: string[]; metaTitle?: string; metaDescription?: string }>;
   testimonials: Testimonial[];
@@ -42,6 +74,29 @@ function images(value: SeedImage[] | undefined): ImageAsset[] {
   return (value ?? [])
     .filter((image): image is { url: string; alt?: string } => Boolean(image.url))
     .map((image) => ({ url: image.url, alt: image.alt ?? "" }));
+}
+
+function section(value: SeedSection): ServiceSection {
+  switch (value.layout) {
+    case "cards":
+    case "propertyTabs":
+    case "steps":
+    case "accordion":
+    case "checklist":
+      return value;
+    case "venueGuide":
+      return {
+        ...value,
+        items: value.items.map((item) => ({
+          ...item,
+          image: images(item.image ? [item.image] : [])[0],
+        })),
+      };
+    default: {
+      const unhandled: never = value;
+      throw new Error(`Unhandled section layout: ${JSON.stringify(unhandled)}`);
+    }
+  }
 }
 
 export function loadSeed(): Content {
@@ -83,9 +138,22 @@ export function loadSeed(): Content {
       .map((service) => ({
         slug: service.slug,
         title: service.title,
+        heroTitle: service.heroTitle ?? "",
         summary: service.summary,
+        heroDiagram:
+          service.heroDiagram && isHeroDiagram(service.heroDiagram)
+            ? service.heroDiagram
+            : null,
+        heroImage: images(service.heroImage ? [service.heroImage] : [])[0] ?? null,
+        heroCaption: service.heroCaption ?? "",
+        heroButtonLabel: service.heroButtonLabel ?? "",
+        facts: service.facts ?? [],
+        sections: (service.sections ?? []).map(section),
         body: service.body,
         features: service.features ?? [],
+        questions: service.questions ?? [],
+        surveyHeading: service.surveyHeading ?? "",
+        surveyBody: service.surveyBody ?? "",
         images: images(service.images),
         metaTitle: service.metaTitle,
         metaDescription: service.metaDescription,

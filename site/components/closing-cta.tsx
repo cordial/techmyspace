@@ -3,15 +3,30 @@ import { Reveal } from "@/components/reveal";
 import type { SiteInfo } from "@/lib/types";
 import Link from "next/link";
 
-export function ClosingCta({ site }: { site: SiteInfo }) {
+export function ClosingCta({
+  id,
+  site,
+  heading = "Stay connected, secure, and ahead of the job.",
+  summary,
+}: {
+  id?: string;
+  site: SiteInfo;
+  heading?: string;
+  summary?: string;
+}) {
   return (
-    <section className="px-4 py-20 md:py-28">
+    <section id={id} className="px-4 py-20 md:py-28">
       <Reveal className="mx-auto flex max-w-6xl flex-col gap-8 border border-yellow/40 bg-charcoal px-6 py-10 md:flex-row md:items-end md:justify-between md:px-10 md:py-14">
         <div className="max-w-xl">
-          <p className="font-display text-xs tracking-[0.22em] text-yellow uppercase">Free consultation</p>
+          <p className="font-display text-xs tracking-[0.22em] text-yellow uppercase">
+            Free consultation
+          </p>
           <h2 className="font-display mt-3 text-4xl leading-none tracking-tight text-cream md:text-6xl">
-            Stay connected, secure, and ahead of the job.
+            {heading}
           </h2>
+          {summary ? (
+            <p className="mt-4 text-lg leading-relaxed text-cream/80">{summary}</p>
+          ) : null}
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <PhoneLink

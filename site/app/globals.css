@@ -80,3 +80,11 @@ body {
 .richtext strong {
   color: var(--color-cream);
 }
+
+.richtext-flush > :first-child {
+  margin-top: 0;
+}
+
+.richtext-flush > :last-child {
+  margin-bottom: 0;
+}

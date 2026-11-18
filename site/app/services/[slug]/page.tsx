@@ -9,9 +9,19 @@ import { Headline } from "@/components/headline";
 import { PageHero } from "@/components/page-hero";
 import { RichText } from "@/components/rich-text";
 import { Section } from "@/components/section";
+import { ServiceHero, type HeroAction } from "@/components/service-hero";
 import { ServiceIcon } from "@/components/service-icon";
+import {
+  Accordion,
+  PROPERTY_TABS_ID,
+  ServiceSections,
+} from "@/components/service-sections";
 import { faqPath, servicePath } from "@/lib/routes";
+import { withCanonical } from "@/lib/seo";
+import type { Faq, Service, SiteInfo } from "@/lib/types";
 import { getFaqs, getService, getServices, getSite } from "@/lib/wp/content";
+
+const CONTACT_ID = "contact";
 
 export async function generateStaticParams() {
   const services = await getServices();
@@ -28,7 +38,10 @@ export async function generateMetadata({
   if (!service) {
     return {};
   }
-  return { title: service.metaTitle, description: service.metaDescription };
+  return withCanonical(servicePath(slug), {
+    title: service.metaTitle,
+    description: service.metaDescription,
+  });
 }
 
 export default async function ServicePage({
@@ -47,10 +60,81 @@ export default async function ServicePage({
     notFound();
   }
 
-  const related = faqs
-    .filter((faq) => faq.service === service.slug)
-    .slice(0, 6);
-  const others = services.filter((item) => item.slug !== service.slug);
+  if (service.sections.length) {
+    return <SectionedService service={service} site={site} />;
+  }
+
+  return (
+    <ClassicService
+      service={service}
+      others={services.filter((item) => item.slug !== service.slug)}
+      related={faqs.filter((faq) => faq.service === service.slug).slice(0, 6)}
+      site={site}
+    />
+  );
+}
+
+function SectionedService({ service, site }: { service: Service; site: SiteInfo }) {
+  const actions: HeroAction[] = [];
+  if (service.heroButtonLabel) {
+    actions.push({ href: `#${CONTACT_ID}`, label: service.heroButtonLabel });
+  }
+  if (service.sections.some((section) => section.layout === "propertyTabs")) {
+    actions.push({ href: `#${PROPERTY_TABS_ID}`, label: "Find your property type" });
+  }
+  if (service.questions.length) {
+    actions.push({ href: "#faq", label: "Read the FAQ" });
+  }
+
+  return (
+    <>
+      <ServiceHero
+        eyebrow={service.title}
+        title={service.heroTitle || service.title}
+        summary={service.summary}
+        diagram={service.heroDiagram}
+        image={
+          service.heroDiagram
+            ? undefined
+            : (service.heroImage ?? service.images[0])
+        }
+        caption={service.heroCaption}
+        facts={service.facts}
+        actions={actions}
+      />
+      <ServiceSections sections={service.sections} />
+      {service.questions.length ? (
+        <Section id="faq" spacing="tight">
+          <Headline size="md">Frequently asked questions</Headline>
+          <Accordion
+            items={service.questions.map((item) => ({
+              title: item.question,
+              body: item.answer,
+            }))}
+          />
+        </Section>
+      ) : null}
+      <ClosingCta
+        id={CONTACT_ID}
+        site={site}
+        heading={service.surveyHeading || undefined}
+        summary={service.surveyBody || undefined}
+      />
+    </>
+  );
+}
+
+function ClassicService({
+  service,
+  others,
+  related,
+  site,
+}: {
+  service: Service;
+  others: Service[];
+  related: Faq[];
+  site: SiteInfo;
+}) {
   const heroImage = service.images[0];
   const gallery = service.images.slice(1);
 
@@ -58,7 +142,7 @@ export default async function ServicePage({
     <>
       <PageHero
         eyebrow="Service"
-        title={service.title}
+        title={service.heroTitle || service.title}
         summary={service.summary}
         image={
           heroImage

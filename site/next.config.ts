@@ -61,11 +61,36 @@ function legacyRedirects(): {
     add(study.legacyPaths, `/case-studies/${study.slug}`);
   }
   for (const faq of seed.faqs) {
-    add(faq.legacyPaths, `/faq/${faq.slug}`);
+    add(faq.legacyPaths, `/faq#${faq.slug}`);
   }
   for (const page of seed.pages) {
     add(page.legacyPaths, page.path);
   }
+
+  rules.push(
+    { source: "/portfolio-items", destination: "/services", permanent: true },
+    {
+      source: "/faq_category/alarms",
+      destination: "/services/alarms",
+      permanent: true,
+    },
+    {
+      source: "/faq_category/cctv",
+      destination: "/services/cctv",
+      permanent: true,
+    },
+    {
+      source: "/faq_category/access-control",
+      destination: "/services/security",
+      permanent: true,
+    },
+    {
+      source: "/faq_category/audio-visual",
+      destination: "/services/av",
+      permanent: true,
+    },
+    { source: "/faq/:slug", destination: "/faq#:slug", permanent: true },
+  );
 
   return rules;
 }
@@ -88,6 +113,7 @@ const nextConfig: NextConfig = {
         hostname: "www.techmyspace.co.uk",
         pathname: "/wp-content/uploads/**",
       },
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
       ...(wordpressImagePatterns() ?? []),
     ],
   },

@@ -12,14 +12,15 @@ import { RichText } from "@/components/rich-text";
 import { Section } from "@/components/section";
 import { ServiceCard } from "@/components/service-card";
 import { servicePath } from "@/lib/routes";
+import { withCanonical } from "@/lib/seo";
 import { getContent } from "@/lib/wp/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { home } = await getContent();
-  return {
+  return withCanonical("/", {
     title: { absolute: home.metaTitle },
     description: home.metaDescription,
-  };
+  });
 }
 
 export default async function HomePage() {

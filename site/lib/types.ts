@@ -23,12 +23,72 @@ export type Feature = {
   body: string;
 };
 
+export type CardItem = Feature & {
+  /** Site path or #anchor. The whole card becomes a link when set. */
+  link?: string;
+};
+
+export type PropertyType = Feature & {
+  tabLabel: string;
+  profiles: string;
+};
+
+export type VenueGuideItem = Feature & {
+  /** Empty means the venue gets no jump button. */
+  navLabel: string;
+  profiles: string;
+  /** Empty means the default "Property profiles". */
+  profilesLabel?: string;
+  image?: ImageAsset;
+  imageCaption: string;
+};
+
+type SectionCopy = {
+  heading: string;
+  intro: string;
+};
+
+export type ServiceSection = SectionCopy &
+  (
+    | { layout: "cards"; items: CardItem[] }
+    | { layout: "propertyTabs"; items: PropertyType[] }
+    | { layout: "steps"; items: Feature[] }
+    | { layout: "accordion"; items: Feature[] }
+    | { layout: "checklist"; items: Feature[] }
+    | { layout: "venueGuide"; items: VenueGuideItem[] }
+  );
+
+export type SectionLayout = ServiceSection["layout"];
+
+export const HERO_DIAGRAMS = ["alarms", "cctv", "wifi"] as const;
+
+export type HeroDiagram = (typeof HERO_DIAGRAMS)[number];
+
+export function isHeroDiagram(value: string): value is HeroDiagram {
+  return (HERO_DIAGRAMS as readonly string[]).includes(value);
+}
+
+export type ServiceQuestion = {
+  question: string;
+  answer: string;
+};
+
 export type Service = {
   slug: string;
   title: string;
+  heroTitle: string;
   summary: string;
+  heroDiagram: HeroDiagram | null;
+  heroImage: ImageAsset | null;
+  heroCaption: string;
+  heroButtonLabel: string;
+  facts: string[];
+  sections: ServiceSection[];
   body: string;
   features: Feature[];
+  questions: ServiceQuestion[];
+  surveyHeading: string;
+  surveyBody: string;
   images: ImageAsset[];
   metaTitle: string;
   metaDescription: string;

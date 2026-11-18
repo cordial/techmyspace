@@ -14,12 +14,14 @@ const PAGE_ROUTES: Record<string, { kind: PageKind; path: string }> = {
   website: { kind: "legal", path: "/legal/website" },
 };
 
-export function routeForPage(slug: string): { kind: PageKind; path: string } | null {
+export function routeForPage(
+  slug: string,
+): { kind: PageKind; path: string } | null {
   if (slug === "home") {
     return null;
   }
 
-  return PAGE_ROUTES[slug] ?? { kind: "page", path: `/${slug}` };
+  return PAGE_ROUTES[slug] ?? null;
 }
 
 export function servicePath(slug: string): string {
@@ -31,5 +33,5 @@ export function caseStudyPath(slug: string): string {
 }
 
 export function faqPath(slug: string): string {
-  return `/faq/${slug}`;
+  return `/faq#${slug}`;
 }

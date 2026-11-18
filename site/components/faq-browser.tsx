@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useReducedMotion } from "framer-motion";
 import Link from "next/link";
 
@@ -23,7 +23,7 @@ const SHORT_LABELS: Record<string, string> = {
   cctv: "CCTV",
   security: "Security",
   "structured-cabling": "Cabling",
-  communication: "Comms",
+  communication: "Wi-Fi",
   av: "AV",
 };
 
@@ -36,6 +36,15 @@ export function FaqBrowser({ groups }: { groups: FaqGroup[] }) {
   const [service, setService] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [openSlug, setOpenSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    const slug = window.location.hash.replace(/^#/, "");
+    if (!slug) {
+      return;
+    }
+    setOpenSlug(slug);
+    document.getElementById(slug)?.scrollIntoView();
+  }, []);
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -121,7 +130,7 @@ export function FaqBrowser({ groups }: { groups: FaqGroup[] }) {
                 {group.faqs.map((faq) => {
                   const open = openSlug === faq.slug;
                   return (
-                    <li key={faq.slug}>
+                    <li id={faq.slug} key={faq.slug} className="scroll-mt-24">
                       <button
                         type="button"
                         aria-expanded={open}
@@ -148,6 +157,7 @@ export function FaqBrowser({ groups }: { groups: FaqGroup[] }) {
                             <RichText html={faq.answer} className="max-w-3xl" />
                             <Link
                               href={faqPath(faq.slug)}
+                              onClick={() => setOpenSlug(faq.slug)}
                               className="mt-4 inline-flex font-display text-xs tracking-[0.18em] text-yellow uppercase"
                             >
                               Open this answer

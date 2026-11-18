@@ -13,6 +13,7 @@ import { RichText } from "@/components/rich-text";
 import { Section } from "@/components/section";
 import { aboutCopyFrom } from "@/lib/about";
 import { caseStudyPath } from "@/lib/routes";
+import { withCanonical } from "@/lib/seo";
 import {
   getCaseStudies,
   getPage,
@@ -25,7 +26,10 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!page) {
     return {};
   }
-  return { title: page.metaTitle, description: page.metaDescription };
+  return withCanonical("/about", {
+    title: page.metaTitle,
+    description: page.metaDescription,
+  });
 }
 
 export default async function AboutPage() {

@@ -1,16 +1,24 @@
 import { routeForPage } from "@/lib/routes";
 import type {
+  CardItem,
   CaseStudy,
   Content,
   ContentPage,
   Faq,
   Feature,
+  HeroDiagram,
   HomeContent,
   ImageAsset,
+  PropertyType,
+  SectionLayout,
   Service,
+  ServiceQuestion,
+  ServiceSection,
   SiteInfo,
   Testimonial,
+  VenueGuideItem,
 } from "@/lib/types";
+import { isHeroDiagram } from "@/lib/types";
 
 const QUERY = `
   query SiteContent {
@@ -21,11 +29,61 @@ const QUERY = `
         menuOrder
         featuredImage { node { sourceUrl altText } }
         serviceDetails {
+          heroTitle
           summary
+          heroDiagram
+          heroImage { node { sourceUrl altText } }
+          heroCaption
+          heroButtonLabel
+          facts { label }
+          sections {
+            __typename
+            ... on ServiceDetailsSectionsCardsLayout {
+              heading
+              intro
+              cardsItems { title body link }
+            }
+            ... on ServiceDetailsSectionsPropertyTabsLayout {
+              heading
+              intro
+              propertyTabsItems { tabLabel title body profiles }
+            }
+            ... on ServiceDetailsSectionsStepsLayout {
+              heading
+              intro
+              stepsItems { title body }
+            }
+            ... on ServiceDetailsSectionsAccordionLayout {
+              heading
+              intro
+              accordionItems { title body }
+            }
+            ... on ServiceDetailsSectionsChecklistLayout {
+              heading
+              intro
+              checklistItems { title body }
+            }
+            ... on ServiceDetailsSectionsVenueGuideLayout {
+              heading
+              intro
+              venueGuideItems {
+                navLabel
+                title
+                body
+                profilesLabel
+                profiles
+                imageCaption
+                image { node { sourceUrl altText } }
+              }
+            }
+          }
           body
           metaTitle
           metaDescription
           features { title body }
+          questions { question answer }
+          surveyHeading
+          surveyBody
           gallery { nodes { sourceUrl altText } }
         }
       }
@@ -115,20 +173,56 @@ type GraphqlPayload = {
   pages?: { nodes?: GraphqlPage[] | null } | null;
 };
 
+type GraphqlItem = {
+  title?: string | null;
+  body?: string | null;
+  link?: string | null;
+  tabLabel?: string | null;
+  navLabel?: string | null;
+  profilesLabel?: string | null;
+  profiles?: string | null;
+  imageCaption?: string | null;
+  image?: { node?: MediaNode | null } | null;
+} | null;
+
+type GraphqlItems = GraphqlItem[] | null | undefined;
+
+type GraphqlSection = {
+  __typename?: string | null;
+  heading?: string | null;
+  intro?: string | null;
+  cardsItems?: GraphqlItems;
+  propertyTabsItems?: GraphqlItems;
+  stepsItems?: GraphqlItems;
+  accordionItems?: GraphqlItems;
+  checklistItems?: GraphqlItems;
+  venueGuideItems?: GraphqlItems;
+} | null;
+
 type GraphqlService = {
   slug?: string | null;
   title?: string | null;
   menuOrder?: number | null;
   featuredImage?: { node?: MediaNode | null } | null;
   serviceDetails?: {
+    heroTitle?: string | null;
     summary?: string | null;
+    heroDiagram?: string[] | string | null;
+    heroImage?: { node?: MediaNode | null } | null;
+    heroCaption?: string | null;
+    heroButtonLabel?: string | null;
+    facts?: Array<{ label?: string | null } | null> | null;
+    sections?: GraphqlSection[] | null;
     body?: string | null;
     metaTitle?: string | null;
     metaDescription?: string | null;
-    features?: Array<{
-      title?: string | null;
-      body?: string | null;
+    features?: GraphqlItems;
+    questions?: Array<{
+      question?: string | null;
+      answer?: string | null;
     } | null> | null;
+    surveyHeading?: string | null;
+    surveyBody?: string | null;
     gallery?: Gallery;
   } | null;
 };
@@ -227,16 +321,125 @@ function mediaList(
   return images;
 }
 
-function featureList(
-  value:
-    | Array<{ title?: string | null; body?: string | null } | null>
-    | null
-    | undefined,
-): Feature[] {
+function featureList(value: GraphqlItems): Feature[] {
   return (value ?? []).flatMap((feature) => {
     const title = text(feature?.title);
-    const body = text(feature?.body);
-    return title ? [{ title, body }] : [];
+    return title ? [{ title, body: text(feature?.body) }] : [];
+  });
+}
+
+function cardList(value: GraphqlItems): CardItem[] {
+  return (value ?? []).flatMap((item) => {
+    const title = text(item?.title);
+    return title
+      ? [{ title, body: text(item?.body), link: text(item?.link) }]
+      : [];
+  });
+}
+
+function propertyTypeList(value: GraphqlItems): PropertyType[] {
+  return (value ?? []).flatMap((item) => {
+    const title = text(item?.title);
+    if (!title) {
+      return [];
+    }
+    return [
+      {
+        title,
+        body: text(item?.body),
+        tabLabel: text(item?.tabLabel) || title,
+        profiles: text(item?.profiles),
+      },
+    ];
+  });
+}
+
+function venueGuideList(value: GraphqlItems): VenueGuideItem[] {
+  return (value ?? []).flatMap((item) => {
+    const title = text(item?.title);
+    if (!title) {
+      return [];
+    }
+    const [image] = mediaList(null, item?.image?.node);
+    return [
+      {
+        title,
+        body: text(item?.body),
+        navLabel: text(item?.navLabel),
+        profiles: text(item?.profiles),
+        profilesLabel: text(item?.profilesLabel),
+        image,
+        imageCaption: text(item?.imageCaption),
+      },
+    ];
+  });
+}
+
+const SECTION_LAYOUTS: Record<string, SectionLayout> = {
+  ServiceDetailsSectionsCardsLayout: "cards",
+  ServiceDetailsSectionsPropertyTabsLayout: "propertyTabs",
+  ServiceDetailsSectionsStepsLayout: "steps",
+  ServiceDetailsSectionsAccordionLayout: "accordion",
+  ServiceDetailsSectionsChecklistLayout: "checklist",
+  ServiceDetailsSectionsVenueGuideLayout: "venueGuide",
+};
+
+function serviceSection(section: GraphqlSection): ServiceSection | null {
+  const layout = SECTION_LAYOUTS[section?.__typename ?? ""];
+  if (!section || !layout) {
+    return null;
+  }
+  const copy = { heading: text(section.heading), intro: text(section.intro) };
+  switch (layout) {
+    case "cards":
+      return { ...copy, layout, items: cardList(section.cardsItems) };
+    case "propertyTabs":
+      return {
+        ...copy,
+        layout,
+        items: propertyTypeList(section.propertyTabsItems),
+      };
+    case "steps":
+      return { ...copy, layout, items: featureList(section.stepsItems) };
+    case "accordion":
+      return { ...copy, layout, items: featureList(section.accordionItems) };
+    case "checklist":
+      return { ...copy, layout, items: featureList(section.checklistItems) };
+    case "venueGuide":
+      return {
+        ...copy,
+        layout,
+        items: venueGuideList(section.venueGuideItems),
+      };
+    default: {
+      const unhandled: never = layout;
+      throw new Error(`Unhandled section layout: ${String(unhandled)}`);
+    }
+  }
+}
+
+function sectionList(value: GraphqlSection[] | null | undefined): ServiceSection[] {
+  return (value ?? []).flatMap((section) => {
+    const parsed = serviceSection(section);
+    return parsed && parsed.items.length ? [parsed] : [];
+  });
+}
+
+function heroDiagram(value: string[] | string | null | undefined): HeroDiagram | null {
+  const raw = text(Array.isArray(value) ? value[0] : value);
+  return isHeroDiagram(raw) ? raw : null;
+}
+
+function questionList(
+  value:
+    | Array<{ question?: string | null; answer?: string | null } | null>
+    | null
+    | undefined,
+): ServiceQuestion[] {
+  return (value ?? []).flatMap((item) => {
+    const question = text(item?.question);
+    const answer = text(item?.answer);
+    return question ? [{ question, answer }] : [];
   });
 }
 
@@ -297,11 +500,17 @@ export async function loadFromWordPress(endpoint: string): Promise<Content> {
     tagline: "CCTV, alarms, access, networks and AV in Stockport.",
   };
 
+  const storedHeroTitle = text(homeDetails?.heroTitle);
+  const storedHeroAccent = text(homeDetails?.heroAccent);
+  const legacyHero =
+    storedHeroTitle === "Step into the future with our wide range of" &&
+    storedHeroAccent === "Tech Services";
+
   const home: HomeContent = {
     title: text(homeNode?.title) || "Home",
     heroKicker: text(homeDetails?.heroKicker),
-    heroTitle: text(homeDetails?.heroTitle),
-    heroAccent: text(homeDetails?.heroAccent),
+    heroTitle: legacyHero ? "CCTV and alarms" : storedHeroTitle,
+    heroAccent: legacyHero ? "in Stockport" : storedHeroAccent,
     heroSummary: text(homeDetails?.heroSummary),
     introTitle: text(homeDetails?.introTitle),
     intro: text(homeDetails?.intro),
@@ -328,9 +537,22 @@ export async function loadFromWordPress(endpoint: string): Promise<Content> {
         {
           slug: node.slug,
           title: text(node.title),
+          heroTitle: text(details?.heroTitle),
           summary: text(details?.summary),
+          heroDiagram: heroDiagram(details?.heroDiagram),
+          heroImage: mediaList(null, details?.heroImage?.node)[0] ?? null,
+          heroCaption: text(details?.heroCaption),
+          heroButtonLabel: text(details?.heroButtonLabel),
+          facts: (details?.facts ?? []).flatMap((fact) => {
+            const label = text(fact?.label);
+            return label ? [label] : [];
+          }),
+          sections: sectionList(details?.sections),
           body: text(details?.body),
           features: featureList(details?.features),
+          questions: questionList(details?.questions),
+          surveyHeading: text(details?.surveyHeading),
+          surveyBody: text(details?.surveyBody),
           images: mediaList(details?.gallery, node.featuredImage?.node),
           metaTitle: text(details?.metaTitle) || text(node.title),
           metaDescription: text(details?.metaDescription),

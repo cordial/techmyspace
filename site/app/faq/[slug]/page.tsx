@@ -24,7 +24,11 @@ export async function generateMetadata({
   if (!faq) {
     return {};
   }
-  return { title: faq.metaTitle, description: faq.metaDescription };
+  return {
+    title: faq.metaTitle,
+    description: faq.metaDescription,
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function FaqDetailPage({

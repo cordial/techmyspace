@@ -6,14 +6,15 @@ import { PageHero } from "@/components/page-hero";
 import { PhoneLink } from "@/components/phone-link";
 import { RichText } from "@/components/rich-text";
 import { Section } from "@/components/section";
+import { withCanonical } from "@/lib/seo";
 import { getPage, getServices, getSite } from "@/lib/wp/content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage("contact");
-  return {
+  return withCanonical("/contact", {
     title: page?.metaTitle ?? "Contact",
     description: page?.metaDescription,
-  };
+  });
 }
 
 export default async function ContactPage() {

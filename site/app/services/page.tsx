@@ -4,12 +4,14 @@ import { ClosingCta } from "@/components/closing-cta";
 import { PageHero } from "@/components/page-hero";
 import { Section } from "@/components/section";
 import { ServiceCard } from "@/components/service-card";
+import { withCanonical } from "@/lib/seo";
 import { getServices, getSite } from "@/lib/wp/content";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withCanonical("/services", {
   title: "Services",
-  description: "CCTV, alarms, security, structured cabling, communications and audio visual in Stockport.",
-};
+  description:
+    "CCTV, alarms, security, structured cabling, communications and audio visual in Stockport.",
+});
 
 export default async function ServicesPage() {
   const [services, site] = await Promise.all([getServices(), getSite()]);
